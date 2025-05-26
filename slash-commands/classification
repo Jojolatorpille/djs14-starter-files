@@ -1,0 +1,42 @@
+const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, Events } = require('discord.js');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('classification')
+    .setDescription('Affiche une modale pour saisir les niveaux taxonomiques'),
+
+  async execute(interaction) {
+    const modal = new ModalBuilder()
+      .setCustomId('classificationModal')
+      .setTitle('Classification Biologique');
+
+    const labels = ['Classe', 'Ordre', 'Famille', 'Genre', 'Espèce'];
+    const components = labels.map((label, index) => {
+      const input = new TextInputBuilder()
+        .setCustomId(`champ${index + 1}`)
+        .setLabel(label)
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+
+      return new ActionRowBuilder().addComponents(input);
+    });
+
+    modal.addComponents(...components);
+
+    await interaction.showModal(modal);
+  },
+};
+
+client.on(Events.InteractionCreate, async interaction => {
+  if (!interaction.isModalSubmit()) return;
+  if (interaction.customId !== 'classificationModal') return;
+
+  const labels = ['Classe', 'Ordre', 'Famille', 'Genre', 'Espèce'];
+  const valeurs = labels.map((_, index) =>
+    interaction.fields.getTextInputValue(`champ${index + 1}`)
+  );
+
+  const reponse = labels.map((label, i) => `**${label}** : ${valeurs[i]}`).join('\n');
+
+  await interaction.reply({ content: `🧬 Classification saisie :\n${reponse}`, ephemeral: true });
+});
